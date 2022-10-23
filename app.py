@@ -153,7 +153,6 @@ def users_show(user_id):
                 .order_by(Message.timestamp.desc())
                 .limit(100)
                 .all())
-    import pdb; pdb.set_trace()  #  LEFT OFF HERE
     return render_template('users/show.html', user=user, messages=messages)
 
 
