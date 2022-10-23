@@ -119,13 +119,13 @@ class User(db.Model):
         return f"<User #{self.id}: {self.username}, {self.email}>"
 
     def is_followed_by(self, other_user):
-        """Is this user followed by `other_user`?"""
+        """Is this user followed by `other_user`? Returns Boolean"""
 
         found_user_list = [user for user in self.followers if user == other_user]
         return len(found_user_list) == 1
 
     def is_following(self, other_user):
-        """Is this user following `other_use`?"""
+        """Is this user following `other_use`? Returns Boolean"""
 
         found_user_list = [user for user in self.following if user == other_user]
         return len(found_user_list) == 1
