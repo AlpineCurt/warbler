@@ -213,8 +213,7 @@ def stop_following(follow_id):
 @app.route('/users/profile', methods=["GET", "POST"])
 def profile():
     """Update profile for current user."""
-    ### LEFT OFF HERE ###
-    #import pdb; pdb.set_trace()
+
     form = UserEditForm(obj=g.user)
     if not g.user:
         flash("Access unauthorized.", "danger")
@@ -230,7 +229,6 @@ def profile():
             user.image_url = form.image_url.data
             user.header_image_url = form.header_image_url.data
             user.bio = form.bio.data
-            import pdb; pdb.set_trace()
             db.session.add(user)
             db.session.commit()
             
@@ -238,8 +236,6 @@ def profile():
             return redirect(f"/users/profile")
 
         flash("Invalid credentials.", 'danger')
-    
-    
     
     return render_template("/users/edit.html", form=form)
 
@@ -320,14 +316,16 @@ def homepage():
     - anon users: no messages
     - logged in: 100 most recent messages of followed_users
     """
-
+    ## LEFT OFF HERE, NOT WORKING RIGHT ##
     if g.user:
+        following_ids = [user.id for user in g.user.following]
+        following_ids.append(g.user.id)
         messages = (Message
                     .query
+                    .filter(Message.user_id.in_(following_ids))
                     .order_by(Message.timestamp.desc())
                     .limit(100)
                     .all())
-
         return render_template('home.html', messages=messages)
 
     else:
