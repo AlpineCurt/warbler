@@ -16,6 +16,12 @@ class UserAddForm(FlaskForm):
     password = PasswordField('Password', validators=[Length(min=6)])
     image_url = StringField('(Optional) Image URL')
 
+class UserEditForm(UserAddForm):
+    """Form for editing user profile"""
+
+    header_image_url = StringField('(Optional) Header Image URL')
+    bio = StringField('(Optional) Bio')
+
 
 class LoginForm(FlaskForm):
     """Login form."""
