@@ -5,7 +5,7 @@ from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 
 from forms import UserAddForm, LoginForm, MessageForm, UserEditForm
-from models import db, connect_db, User, Message
+from models import Likes, db, connect_db, User, Message
 
 CURR_USER_KEY = "curr_user"
 
@@ -153,7 +153,8 @@ def users_show(user_id):
                 .order_by(Message.timestamp.desc())
                 .limit(100)
                 .all())
-    return render_template('users/show.html', user=user, messages=messages)
+    curr_user = g.user.id if g.user else None
+    return render_template('users/show.html', user=user, messages=messages, curr_user=curr_user)
 
 
 @app.route('/users/<int:user_id>/following')
@@ -287,7 +288,13 @@ def messages_show(message_id):
     """Show a message."""
 
     msg = Message.query.get(message_id)
-    return render_template('messages/show.html', message=msg)
+    like_user_ids = [user.id for user in msg.likes]
+    curr_user = g.user.id if g.user else None
+    #import pdb; pdb.set_trace()
+    return render_template('messages/show.html',
+        message=msg,
+        curr_user=curr_user,
+        like_user_ids=like_user_ids)
 
 
 @app.route('/messages/<int:message_id>/delete', methods=["POST"])
@@ -305,6 +312,35 @@ def messages_destroy(message_id):
     return redirect(f"/users/{g.user.id}")
 
 
+@app.route('/messages/<int:message_id>/like', methods=["POST"])
+def message_like_add(message_id):
+    """Add a like"""
+    #import pdb; pdb.set_trace()
+    if not g.user or not request.form['curr_user'] or g.user.id != int(request.form['curr_user']):
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+    new_like = Likes(
+        user_id=request.form['curr_user'],
+        message_id=message_id
+        )
+    db.session.add(new_like)
+    db.session.commit()
+    return redirect(f"/messages/{message_id}")
+
+
+@app.route('/messages/<int:message_id>/like/delete', methods=["POST"])
+def message_like_delete(message_id):
+    """Remove a like"""
+    #import pdb; pdb.set_trace()
+    if not g.user or not request.form['curr_user'] or g.user.id != int(request.form['curr_user']):
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+    del_like = Likes.query.filter(Likes.user_id == request.form['curr_user'], Likes.message_id == message_id).first()
+    db.session.delete(del_like)
+    db.session.commit()
+    return redirect(f"/messages/{message_id}")
+
+
 ##############################################################################
 # Homepage and error pages
 
@@ -312,11 +348,9 @@ def messages_destroy(message_id):
 @app.route('/')
 def homepage():
     """Show homepage:
-
     - anon users: no messages
     - logged in: 100 most recent messages of followed_users
     """
-    ## LEFT OFF HERE, NOT WORKING RIGHT ##
     if g.user:
         following_ids = [user.id for user in g.user.following]
         following_ids.append(g.user.id)
@@ -326,7 +360,7 @@ def homepage():
                     .order_by(Message.timestamp.desc())
                     .limit(100)
                     .all())
-        return render_template('home.html', messages=messages)
+        return render_template('home.html', messages=messages, curr_user=g.user.id)
 
     else:
         return render_template('home-anon.html')
