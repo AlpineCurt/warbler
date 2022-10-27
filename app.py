@@ -241,6 +241,14 @@ def profile():
     return render_template("/users/edit.html", form=form)
 
 
+@app.route('/users/<int:user_id>/likes')
+def user_show_likes(user_id):
+    """Show all warbles liked by this user."""
+    user = User.query.filter_by(id = user_id).first()
+    messages = user.likes
+    return render_template("/users/show.html", messages=messages, user=user)
+
+
 @app.route('/users/delete', methods=["POST"])
 def delete_user():
     """Delete user."""
