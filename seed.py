@@ -20,7 +20,7 @@ with open('generator/follows.csv') as follows:
 db.session.commit()
 
 like1 = Likes(user_id=2, message_id=222)
-like2 = Likes(user_id=301, message_id=588)
+#like2 = Likes(user_id=301, message_id=588)
 
 db.session.add(like1)
 db.session.commit()

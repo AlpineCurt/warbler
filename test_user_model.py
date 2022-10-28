@@ -56,3 +56,51 @@ class UserModelTestCase(TestCase):
         # User should have no messages & no followers
         self.assertEqual(len(u.messages), 0)
         self.assertEqual(len(u.followers), 0)
+    
+    def test_signup(self):
+        """User.signup method"""
+
+        email1="user1@test.com",
+        username1="test1",
+        password1="itsasecret"
+
+        user1 = User.signup(
+            email=email1,
+            username=username1,
+            password=password1,
+            image_url=User.image_url.default.arg
+        )
+
+        self.assertIsInstance(user1, User)
+
+        user1_query = User.query.filter_by(username="test1").first()
+        self.assertNotEqual(
+            user1_query.password,
+            'itsasecret',
+            msg="Password should be hashed")
+    
+    def test_authenticate(self):
+        """User.authenticate method"""
+
+        email1="user1@test.com",
+        username1="test1",
+        password1="itsasecret"
+
+        user1 = User.signup(
+            email=email1,
+            username=username1,
+            password=password1,
+            image_url=User.image_url.default.arg
+        )
+
+        user1_auth = User.authenticate("test1", "itsasecret")
+        self.assertIsInstance(
+            user1_auth,
+            User,
+            msg="Valid password should return User object")
+        
+        user1_bad_password = User.authenticate("test1", "wrongpassword")
+        self.assertFalse(user1_bad_password, msg="Wrong password should return False")
+
+        user1_bad_username = User.authenticate("test2", "itsasecret")
+        self.assertFalse(user1_bad_username, msg="Wrong username should return False")
