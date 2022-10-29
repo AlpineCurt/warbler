@@ -327,7 +327,6 @@ def messages_destroy(message_id):
 @app.route('/messages/<int:message_id>/like', methods=["POST"])
 def message_like_add(message_id):
     """Add a like"""
-    #import pdb; pdb.set_trace()
     if not g.user or not request.form['curr_user'] or g.user.id != int(request.form['curr_user']):
         flash("Access unauthorized.", "danger")
         return redirect("/")
@@ -343,7 +342,6 @@ def message_like_add(message_id):
 @app.route('/messages/<int:message_id>/like/delete', methods=["POST"])
 def message_like_delete(message_id):
     """Remove a like"""
-    #import pdb; pdb.set_trace()
     if not g.user or not request.form['curr_user'] or g.user.id != int(request.form['curr_user']):
         flash("Access unauthorized.", "danger")
         return redirect("/")

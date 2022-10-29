@@ -9,7 +9,7 @@ import os
 from pkgutil import get_data
 from unittest import TestCase
 
-from models import db, connect_db, Message, User
+from models import db, connect_db, Message, User, Likes
 
 # BEFORE we import our app, let's set an environmental variable
 # to use a different database for tests (we need to do this
@@ -150,10 +150,11 @@ class MessageViewTestCase(TestCase):
             html = resp.get_data(as_text=True)
 
             self.assertEqual(resp.status_code, 302, msg="Successful message delete should redirect")
-            self.assertIn("testuser", html, msg="Should redirect to logged in users's profile page")
-            self.assertIn('<a href="/users/profile" class="btn btn-outline-secondary">Edit Profile</a>', html, msg="Should be on users's profile page")
-            
-            ## Need to query and assert that message is not in database ##
+            self.assertIn(f"/users/{self.testuser.id}", html, msg="Should redirect to current user's profile")
+
+            m2 = Message.query.first()
+            self.assertIsNone(m2, msg="Message should be deleted")
+
     def test_messages_destroy_not_logged_in(self):
         """Delete a message while NOT logged in
         /messages/<int:message_id>/delete POST"""
@@ -164,4 +165,63 @@ class MessageViewTestCase(TestCase):
             resp = c.post(f"/messages/{m.id}/delete")
             html = resp.get_data(as_text=True)
 
-            ## Query and assert that message is still in database ##
+            m2 = Message.query.first()
+            self.assertIsNotNone(m2, msg="Message should still exist in db")
+    
+    def test_message_like_add_logged_in(self):
+        """Add a like while logged in
+        /messages/<int:message_id>/like POST"""
+
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess[CURR_USER_KEY] = self.testuser.id
+            
+            c.post("/messages/new", data={"text": "Like this message!"})
+            m = Message.query.first()
+            
+            resp = c.post(f"/messages/{m.id}/like", data={'curr_user': self.testuser.id})
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 302, msg="Successful like POST should redirect to the liked message's page")
+            self.assertIn(f"/messages/{m.id}", html, msg="Successful like POST should redirect to the liked message's page")
+
+            l = Likes.query.first()
+            self.assertIsNotNone(l, msg="The new like should be in the database")
+
+    def test_message_like_add_NOT_logged_in(self):
+        """Add a like while NOT logged in
+        /message/<int:message_id/like POST>"""
+
+        with self.client as c:
+            test_m = Message(text="Like this message!", user_id=self.testuser.id)
+            db.session.add(test_m)
+            db.session.commit()
+
+            resp = c.post(f"/messages/{test_m.id}/like")
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 302, msg="Unlogged in like POST should redirect to home page")
+
+            test_l = Likes.query.first()
+            self.assertIsNone(test_l, msg="Like should not be added to db")
+
+    def test_messge_like_delete_logged_in(self):
+        """Remove a like while logged in
+        /message/<int:message_id>/like/delete POST"""
+
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess[CURR_USER_KEY] = self.testuser.id
+            
+            c.post("/messages/new", data={"text": "Like this message!"})  # Add message to db
+            m = Message.query.first()
+            c.post(f"/messages/{m.id}/like", data={'curr_user': self.testuser.id}) # Add like of message to db
+
+            resp = c.post(f"/messages/{m.id}/like/delete", data={'curr_user': self.testuser.id})
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 302, msg="Successful removal of like should redirect to the individual message page")
+            self.assertIn(f"/messages/{m.id}", html, msg="Successful removal of like should redirect to the individual message page")
+
+            l = Likes.query.first()
+            self.assertIsNone(l, msg="Like should be removed from db")
