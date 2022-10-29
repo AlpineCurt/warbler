@@ -120,7 +120,6 @@ class MessageViewTestCase(TestCase):
         )
         db.session.add(self.test_message)
         db.session.commit()
-        #import pdb; pdb.set_trace()
 
     def test_message_show(self):
         """Display single message
