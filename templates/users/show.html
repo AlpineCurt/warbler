@@ -2,8 +2,8 @@
 {% block user_details %}
   <div class="col-sm-6">
     <ul class="list-group" id="messages">
-
-      {% for message in messages %}
+      {% include 'messages/multiple_messages.html' %}
+      <!-- {% for message in messages %}
 
         <li class="list-group-item">
           <a href="/messages/{{ message.id }}" class="message-link">
@@ -19,7 +19,7 @@
           </div>
         </li>
 
-      {% endfor %}
+      {% endfor %} -->
 
     </ul>
   </div>

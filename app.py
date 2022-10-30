@@ -370,7 +370,15 @@ def homepage():
                     .order_by(Message.timestamp.desc())
                     .limit(100)
                     .all())
-        return render_template('home.html', messages=messages, curr_user=g.user.id)
+        like_user_ids = []
+        import pdb; pdb.set_trace()
+        #user_likes = [msg.likes for msg in messages]
+        for msg in messages:
+            #import pdb; pdb.set_trace()
+            for user in msg.likes:
+                like_user_ids.append(user.id)
+        import pdb; pdb.set_trace()
+        return render_template('home.html', messages=messages, curr_user=g.user.id, like_user_ids=like_user_ids)
 
     else:
         return render_template('home-anon.html')
